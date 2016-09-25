@@ -2,7 +2,8 @@ import Html exposing (..)
 import Html.App as Html
 import Html.Events exposing (..)
 import Random
-
+import List exposing (head, drop)
+import Maybe exposing (withDefault)
 
 
 main =
@@ -19,13 +20,13 @@ main =
 
 
 type alias Model =
-  { dieFace : Int
+  { dieFaces : List Int
   }
 
 
 init : (Model, Cmd Msg)
 init =
-  (Model 1, Cmd.none)
+  (Model [1,1], Cmd.none)
 
 
 
@@ -34,19 +35,18 @@ init =
 
 type Msg
   = Roll
-  | NewFace Int
+  | NewFace ( List Int )
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     Roll ->
-      (model, Random.generate NewFace (Random.int 1 6))
+      -- Generate a list with two random ints
+      ( model, Random.generate NewFace ( Random.list 2 ( Random.int 1 6 ) ) )
 
     NewFace newFace ->
-      (Model newFace, Cmd.none)
-
-
+      ( { dieFaces = newFace }, Cmd.none)
 
 -- SUBSCRIPTIONS
 
@@ -59,10 +59,11 @@ subscriptions model =
 
 -- VIEW
 
-
 view : Model -> Html Msg
+-- gah, lists are not the best way to solve this problem (slightly
+-- unwieldy). Still, it gets the job done with only 2 elements.
 view model =
   div []
-    [ h1 [] [ text (toString model.dieFace) ]
+    [ h1 [] [ text (toString ( Maybe.withDefault 0 ( List.head model.dieFaces ) ) ++ " - " ++ toString ( withDefault 0 ( List.head ( List.drop 1 model.dieFaces ) ) ) ) ]
     , button [ onClick Roll ] [ text "Roll" ]
     ]
