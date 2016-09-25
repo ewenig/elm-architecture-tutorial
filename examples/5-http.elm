@@ -52,7 +52,7 @@ update msg model =
       (model, getRandomGif model.topic)
 
     FetchSucceed newUrl ->
-      (Model model.topic newUrl "", Cmd.none)
+      ( { model | gifUrl = newUrl }, Cmd.none)
 
     FetchFail err ->
       let
