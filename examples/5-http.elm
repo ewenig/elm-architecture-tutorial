@@ -41,6 +41,7 @@ init topic =
 
 type Msg
   = MorePlease
+  | UpdateTopic String
   | FetchSucceed String
   | FetchFail Http.Error
 
@@ -51,8 +52,11 @@ update msg model =
     MorePlease ->
       (model, getRandomGif model.topic)
 
+    UpdateTopic newTopic ->
+      ( { model | topic = newTopic }, Cmd.none)
+
     FetchSucceed newUrl ->
-      ( { model | gifUrl = newUrl }, Cmd.none)
+      ( { model | gifUrl = newUrl, error = "" }, Cmd.none)
 
     FetchFail err ->
       let
@@ -65,7 +69,7 @@ update msg model =
               "Network failure"
 
             Http.UnexpectedPayload _ ->
-              "Error decoding JSON"
+              "Couldn't decode JSON"
 
             Http.BadResponse code _ ->
               "Unexpected HTTP response code " ++ toString code
@@ -81,7 +85,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
   div []
-    [ h2 [] [text model.topic]
+    [ input [ type' "text", value model.topic, onInput UpdateTopic ] []
     , button [ onClick MorePlease ] [ text "More Please!" ]
     , br [] []
     , img [src model.gifUrl] []
