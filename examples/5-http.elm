@@ -5,7 +5,7 @@ import Html.Events exposing (..)
 import Http
 import Json.Decode as Json
 import Task
-
+import String exposing (isEmpty)
 
 
 main =
@@ -24,12 +24,13 @@ main =
 type alias Model =
   { topic : String
   , gifUrl : String
+  , error : String
   }
 
 
 init : String -> (Model, Cmd Msg)
 init topic =
-  ( Model topic "waiting.gif"
+  ( Model topic "waiting.gif" ""
   , getRandomGif topic
   )
 
@@ -51,10 +52,26 @@ update msg model =
       (model, getRandomGif model.topic)
 
     FetchSucceed newUrl ->
-      (Model model.topic newUrl, Cmd.none)
+      (Model model.topic newUrl "", Cmd.none)
 
-    FetchFail _ ->
-      (model, Cmd.none)
+    FetchFail err ->
+      let
+        errtext =
+          case err of
+            Http.Timeout ->
+              "HTTP request timed out"
+
+            Http.NetworkError ->
+              "Network failure"
+
+            Http.UnexpectedPayload _ ->
+              "Error decoding JSON"
+
+            Http.BadResponse code _ ->
+              "Unexpected HTTP response code " ++ toString code
+          
+      in
+        ( { model | error = errtext } , Cmd.none)
 
 
 
@@ -68,6 +85,7 @@ view model =
     , button [ onClick MorePlease ] [ text "More Please!" ]
     , br [] []
     , img [src model.gifUrl] []
+    , h1 [ style [ ("color", "red") ] ] [ if not ( String.isEmpty model.error ) then text ( "Error: " ++ model.error ) else text "" ]
     ]
 
 
